@@ -1,5 +1,31 @@
--- Configuration for the Armory URL
-local ARMORY_BASE_URL = "https://octo.chronicleclassic.com/armory/N'Zoth/"
+-- Base URL structure
+local ARMORY_DOMAIN = "https://octo.chronicleclassic.com/armory/"
+
+-- Helper function to dynamically get the current server/realm name
+local function GetArmoryBaseUrl()
+    local currentRealm = GetRealmName()
+    
+    if currentRealm and currentRealm ~= "" then
+        -- Convert to lower case and remove non-alphanumeric characters for flexible matching
+        local cleanRealm = string.lower(currentRealm)
+        cleanRealm = string.gsub(cleanRealm, "[^a-z0-9]", "") -- Remove apostrophes, spaces, hyphens
+        
+        if string.find(cleanRealm, "cthun") then
+            return ARMORY_DOMAIN .. "C'Thun/"
+        elseif string.find(cleanRealm, "yshaarj") then
+            return ARMORY_DOMAIN .. "Y'Shaarj/"
+        elseif string.find(cleanRealm, "nzoth") then
+            return ARMORY_DOMAIN .. "N'Zoth/"
+        else
+            -- Fallback if connected to a realm not explicitly in the list
+            return ARMORY_DOMAIN .. currentRealm .. "/"
+        end
+    end
+
+    -- Default fallback if GetRealmName() returned nil or empty string
+    DEFAULT_CHAT_FRAME:AddMessage("|cffff0000[OctoArmory]|r Varning: Kunde inte känna av servernamn (GetRealmName returnerade nil). Använder N'Zoth som standard.")
+    return ARMORY_DOMAIN .. "N'Zoth/"
+end
 
 -- Variables to track context
 local lastChatClickedPlayer = nil
@@ -42,7 +68,8 @@ local function OpenArmoryLink(name)
     -- Ensure correct casing for the character name (First letter capitalized, rest lowercase)
     name = string.upper(string.sub(name, 1, 1)) .. string.lower(string.sub(name, 2))
     
-    local fullUrl = ARMORY_BASE_URL .. name
+    -- Dynamically generate the full URL based on current server
+    local fullUrl = GetArmoryBaseUrl() .. name
     
     -- Display the popup dialog with the formatted URL
     local dialog = StaticPopup_Show("OCTO_ARMORY_COPY_LINK")
